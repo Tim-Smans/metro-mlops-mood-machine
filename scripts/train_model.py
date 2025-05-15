@@ -6,6 +6,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import classification_report, f1_score, accuracy_score
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import LabelEncoder
+from sklearn.model_selection import GridSearchCV
 import joblib
 import mlflow
 import mlflow.sklearn
@@ -71,12 +72,28 @@ with mlflow.start_run(experiment_id="1") as run:
 # We are using a TfidVectorizer to transorm our text to numeric values
 # Text: "I feel sad" -> Vector: [0, 0.4, 0.1, 0, 0.9]
     pipeline = Pipeline([
-      ('tfidf', TfidfVectorizer(max_features=5000)),
-      ('clf', LogisticRegression(max_iter=1000))
+      ('tfidf', TfidfVectorizer(max_features=5000, ngram_range=(1,1))),
+      ('clf', LogisticRegression(max_iter=2000, penalty='l2', solver='liblinear', C=10))
     ])
+    
+    param_grid = {
+        'tfidf__max_features': [3000, 5000, 8000],
+        'tfidf__ngram_range': [(1, 1), (1, 2)],
+        'clf__C': [0.1, 1.0, 10],
+        'clf__penalty': ['l2'],
+        'clf__solver': ['liblinear', 'saga']
+    }
+    
+    grid = GridSearchCV(pipeline, param_grid, cv=3, scoring='f1_weighted', verbose=2, n_jobs=-1)
 
     pipeline.fit(df_train['text'], y_train)
 
+    grid.fit(df_train['text'], y_train)
+
+    pipeline = grid.best_estimator_
+    print("Best params:", grid.best_params_)
+    mlflow.log_params(grid.best_params_)
+    
     # Evaluate our model on our test set
     y_pred = pipeline.predict(df_test["text"])
     acc = accuracy_score(y_test, y_pred)
@@ -89,10 +106,16 @@ with mlflow.start_run(experiment_id="1") as run:
     report = classification_report(y_test, y_pred, target_names=le.classes_, output_dict=True)
     report_df = pd.DataFrame(report).transpose()
 
+    print("label encoders:")
+    print(dict(enumerate(le.classes_)))
 
     # Save combined model + label encoder
     model_bundle = {'model': pipeline, 'label_encoder': le}
     joblib.dump(model_bundle, args.output_model)
+
+    # Forceer flush en controleer het bestand
+    assert os.path.exists(args.output_model), "Model file not found!"
+    assert os.path.getsize(args.output_model) > 0, "Model file is empty!"
 
     filename = os.path.basename(args.output_model)
     s3.upload_file(args.output_model, "ml-data", f"models/{filename}")
