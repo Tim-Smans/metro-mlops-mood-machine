@@ -18,7 +18,7 @@ os.environ['MLFLOW_S3_UPLOAD_EXTRA_ARGS'] = '{"ACL": "bucket-owner-full-control"
 
 s3 = boto3.client('s3',
     # Use the external ip for minio here
-    endpoint_url='http://localhost',
+    endpoint_url='http://istio-ingressgateway.istio-system.svc.cluster.local',
     # Minio username
     aws_access_key_id='minio',
     # Minio password
@@ -88,7 +88,11 @@ with mlflow.start_run(experiment_id="1") as run:
     # Classification report
     report = classification_report(y_test, y_pred, target_names=le.classes_, output_dict=True)
     report_df = pd.DataFrame(report).transpose()
-    report_df.to_csv("classification_report.csv")
+    with open("classification_report.csv", "w") as f:
+        report_df.to_csv(f)
+        f.flush()
+        os.fsync(f.fileno())
+
     mlflow.log_artifact("classification_report.csv")
 
     # Save combined model + label encoder
@@ -97,6 +101,7 @@ with mlflow.start_run(experiment_id="1") as run:
 
     filename = os.path.basename(args.output_model)
     s3.upload_file(args.output_model, "ml-data", f"models/{filename}")
+
     
     # Log the model as an MLflow model
     logged_model = mlflow.sklearn.log_model(
