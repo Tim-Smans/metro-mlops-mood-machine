@@ -76,7 +76,7 @@ deploymentSpec:
         - '{{$.outputs.artifacts[''output_model''].path}}'
         command:
         - python
-        - /app/train.py
+        - /app/train_model.py
         image: timsmans/metro-mlops-mood-machine:latest
 pipelineInfo:
   description: End-to-end mood-machine demo pipeline using tweet_eval dataset

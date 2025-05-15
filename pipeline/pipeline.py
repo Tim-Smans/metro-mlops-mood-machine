@@ -26,7 +26,7 @@ def train_model(
 ):
     return dsl.ContainerSpec(
         image='timsmans/metro-mlops-mood-machine:latest', 
-        command=['python', '/app/train.py'],
+        command=['python', '/app/train_model.py'],
         args=[
             '--input_dataset_train', input_dataset_train.path,
             '--input_dataset_validation', input_dataset_validation.path,
