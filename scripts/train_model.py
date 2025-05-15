@@ -53,7 +53,7 @@ y_train = le.fit_transform(df_train['label'])
 y_val = le.transform(df_val['label'])
 y_test = le.transform(df_test['label'])
 
-with mlflow.start_run() as run:
+with mlflow.start_run(experiment_id="1") as run:
 # Training pipeline
 # We are using a TfidVectorizer to transorm our text to numeric values
 # Text: "I feel sad" -> Vector: [0, 0.4, 0.1, 0, 0.9]
@@ -83,9 +83,15 @@ with mlflow.start_run() as run:
     joblib.dump(model_bundle, args.output_model)
 
     # Log the model as an MLflow model
-    mlflow.sklearn.log_model(
+    logged_model = mlflow.sklearn.log_model(
         sk_model=pipeline,
         artifact_path="model",
         registered_model_name="mood-machine-model",
         input_example=[df_train["text"].iloc[0]]
     )
+    
+    mlflow.register_model(
+        model_uri=logged_model.model_uri,
+        name="mood-machine-model"
+    )
+    

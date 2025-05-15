@@ -25,12 +25,19 @@ latest_version = max(
 # Retrieve the download path and UUID
 latest_path = client.get_model_version_download_uri(model_name, latest_version)
 latest_uuid = latest_path.split("/")[4]
+run_id = client.get_model_version(model_name, latest_version).run_id
+
+# Get run to extract experiment ID
+run = client.get_run(run_id)
+print(f"Run id: {run_id}")
+experiment_id = run.info.experiment_id
+print(f"Experiment id: {experiment_id}")
 
 print(f"Latest path: {latest_path}")
 print(f"Latest UUID: {latest_uuid}")
 
 # Prefixes
-source_prefix = f"{latest_uuid}/artifacts/model/"
+source_prefix = f"{experiment_id}/{latest_uuid}/artifacts/model/"
 latest_prefix = "latest/"
 
 print(f"Expected source prefix: ml-models/{source_prefix}")
