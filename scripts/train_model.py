@@ -88,12 +88,7 @@ with mlflow.start_run(experiment_id="1") as run:
     # Classification report
     report = classification_report(y_test, y_pred, target_names=le.classes_, output_dict=True)
     report_df = pd.DataFrame(report).transpose()
-    with open("classification_report.csv", "w") as f:
-        report_df.to_csv(f)
-        f.flush()
-        os.fsync(f.fileno())
 
-    mlflow.log_artifact("classification_report.csv")
 
     # Save combined model + label encoder
     model_bundle = {'model': pipeline, 'label_encoder': le}
