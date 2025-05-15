@@ -1,14 +1,19 @@
 import pandas as pd
 import argparse
-from sklearn.base import accuracy_score
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import classification_report, f1_score
+from sklearn.metrics import classification_report, f1_score, accuracy_score
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import LabelEncoder
 import joblib
 import mlflow
 import mlflow.sklearn
+import os
+
+os.environ['MLFLOW_S3_ENDPOINT_URL'] = os.getenv("MINIO_ENDPOINT", "http://istio-ingressgateway.istio-system.svc.cluster.local")
+os.environ['AWS_ACCESS_KEY_ID'] = os.getenv("MINIO_ACCESS_KEY", "minio")
+os.environ['AWS_SECRET_ACCESS_KEY'] = os.getenv("MINIO_SECRET_KEY", "minio123")
+os.environ['MLFLOW_S3_UPLOAD_EXTRA_ARGS'] = '{"ACL": "bucket-owner-full-control"}'
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--input_dataset_train', type=str, required=True)
