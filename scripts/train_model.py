@@ -1,3 +1,4 @@
+import boto3
 import pandas as pd
 import argparse
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -14,6 +15,18 @@ os.environ['MLFLOW_S3_ENDPOINT_URL'] = os.getenv("MINIO_ENDPOINT", "http://istio
 os.environ['AWS_ACCESS_KEY_ID'] = os.getenv("MINIO_ACCESS_KEY", "minio")
 os.environ['AWS_SECRET_ACCESS_KEY'] = os.getenv("MINIO_SECRET_KEY", "minio123")
 os.environ['MLFLOW_S3_UPLOAD_EXTRA_ARGS'] = '{"ACL": "bucket-owner-full-control"}'
+
+s3 = boto3.client('s3',
+    # Use the external ip for minio here
+    endpoint_url='http://localhost',
+    # Minio username
+    aws_access_key_id='minio',
+    # Minio password
+    aws_secret_access_key='minio123',
+    # Region, You can keep this us-east-1
+    region_name='us-east-1'
+)     
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--input_dataset_train', type=str, required=True)
@@ -82,6 +95,9 @@ with mlflow.start_run(experiment_id="1") as run:
     model_bundle = {'model': pipeline, 'label_encoder': le}
     joblib.dump(model_bundle, args.output_model)
 
+    filename = os.path.basename(args.output_model)
+    s3.upload_file(args.output_model, "ml-data", f"models/{filename}")
+    
     # Log the model as an MLflow model
     logged_model = mlflow.sklearn.log_model(
         sk_model=pipeline,
