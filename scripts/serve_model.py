@@ -24,7 +24,7 @@ latest_version = max(
 
 # Retrieve the download path and UUID
 latest_path = client.get_model_version_download_uri(model_name, latest_version)
-latest_uuid = latest_path.split("/")[4]
+latest_uuid = latest_path.split("/")[3]
 run_id = client.get_model_version(model_name, latest_version).run_id
 
 
