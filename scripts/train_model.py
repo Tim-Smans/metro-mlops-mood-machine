@@ -117,9 +117,6 @@ with mlflow.start_run(experiment_id="1") as run:
     assert os.path.exists(args.output_model), "Model file not found!"
     assert os.path.getsize(args.output_model) > 0, "Model file is empty!"
 
-    filename = os.path.basename(args.output_model)
-    s3.upload_file(args.output_model, "ml-data", f"models/{filename}")
-
     
     # Log the model as an MLflow model
     logged_model = mlflow.sklearn.log_model(
